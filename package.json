@@ -13,10 +13,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
-    "firebase": "^10.7.1",
-    "@firebase/auth": "^10.7.1",
-    "@firebase/firestore": "^10.7.1",
-    "@firebase/storage": "^10.7.1",
+    "firebase": "^10.12.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3"
