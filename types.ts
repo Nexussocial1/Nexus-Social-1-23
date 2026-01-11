@@ -1,4 +1,5 @@
 
+
 export type ReactionType = 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'angry';
 
 export type NotificationType = 'like' | 'comment' | 'follow' | 'system' | 'mention' | 'invite';
@@ -65,6 +66,8 @@ export interface User {
   following: number;
   postsCount?: number;
   blockedUserIds?: string[];
+  // Added isAdmin to support the AdminDashboard and elevated permissions
+  isAdmin?: boolean;
 }
 
 export interface Post {
@@ -106,11 +109,14 @@ export interface Message {
   id: string;
   senderId: string;
   senderName?: string;
-  text: string;
+  text?: string;
+  // Added content and readBy to align with ChatPage and ChatRoom requirements
+  content?: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video' | 'audio' | 'video-note';
   timestamp: any;
   isEdited?: boolean;
+  readBy?: string[];
 }
 
 export interface Conversation {

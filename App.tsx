@@ -1,114 +1,122 @@
-
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { 
+  doc,
+  onSnapshot,
+} from 'firebase/firestore';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { db, auth } from './firebaseConfig';
+import { User } from './types';
 import LoginPage from './pages/LoginPage';
-import HomePage from './pages/HomePage';
-import ProfilePage from './pages/ProfilePage';
-import FriendsPage from './pages/FriendsPage';
 import ChatPage from './pages/ChatPage';
+import FriendsPage from './pages/FriendsPage';
 import GalleryPage from './pages/GalleryPage';
+import SettingsPage from './pages/SettingsPage';
+import HomePage from './pages/HomePage';
 import PostDetailPage from './pages/PostDetailPage';
+import ProfilePage from './pages/ProfilePage';
 import PageDetailPage from './pages/PageDetailPage';
 import GroupDetailPage from './pages/GroupDetailPage';
 import HubPage from './pages/HubPage';
-import SettingsPage from './pages/SettingsPage';
-import Topbar from './components/Topbar';
 import Sidebar from './components/Sidebar';
+import Topbar from './components/Topbar';
 import RightSidebar from './components/RightSidebar';
-import { User } from './types';
-import { db, auth } from './firebaseConfig';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Simple placeholder for undeveloped routes
-const AetherPlaceholder = () => (
-  <div className="py-40 text-center glass-aura rounded-[4rem] refract-border animate-aura">
-    <h2 className="text-3xl font-display font-black text-white uppercase tracking-tighter mb-4">Aether Stream</h2>
-    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-cyan-500/60">Frequencies calibrating...</p>
-  </div>
-);
+// Exporting UserNode as an alias for User to satisfy imports in separate chat/admin files
+export type UserNode = User;
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('nexus_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
-
-  // Real-time user profile sync across devices
-  useEffect(() => {
-    if (!user?.id) return;
-    
-    const unsubscribe = onSnapshot(doc(db, "users", user.id), (docSnap) => {
-      if (docSnap.exists()) {
-        const updatedData = docSnap.data() as User;
-        setUser(prev => {
-          // Update local state and storage only if meaningful data changed
-          if (JSON.stringify(prev) !== JSON.stringify(updatedData)) {
-            localStorage.setItem('nexus_user', JSON.stringify(updatedData));
-            return updatedData;
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        // Listen to the user's document in Firestore for live data (isAdmin, avatar, etc)
+        const userRef = doc(db, "users", fbUser.uid);
+        const unsubDoc = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setCurrentUser({ id: fbUser.uid, ...docSnap.data() } as User);
+          } else {
+            // Fallback if document hasn't propagated yet
+            setCurrentUser({
+              id: fbUser.uid,
+              email: fbUser.email || '',
+              displayName: fbUser.displayName || 'Nexus Node',
+              avatar: fbUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fbUser.uid}`,
+              username: fbUser.email?.split('@')[0] || 'node_' + fbUser.uid.slice(0, 5),
+              bio: 'Initializing...',
+              followers: 0,
+              following: 0
+            });
           }
-          return prev;
+          setLoading(false);
         });
+        return () => unsubDoc();
+      } else {
+        setCurrentUser(null);
+        setLoading(false);
       }
     });
 
     return () => unsubscribe();
-  }, [user?.id]);
+  }, []);
 
-  const handleLogin = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('nexus_user', JSON.stringify(userData));
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setCurrentUser(null);
+    } catch (error) {
+      console.error("Logout interruption:", error);
+    }
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('nexus_user');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#02040a] flex items-center justify-center">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-white/5 border-t-cyan-400 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white">NX</div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleUpdateUser = (updatedUser: User) => {
-    setUser(updatedUser);
-    localStorage.setItem('nexus_user', JSON.stringify(updatedUser));
-  };
-
-  if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
+  if (!currentUser) {
+    return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
   }
 
   return (
     <Router>
-      <div className="min-h-screen bg-[#02040a] text-slate-200 overflow-x-hidden">
-        <Topbar user={user} />
-
-        <div className="relative flex">
-          <div className="hidden lg:flex fixed left-8 top-1/2 -translate-y-1/2 z-[100]">
-            <Sidebar user={user} onLogout={handleLogout} />
+      <div className="min-h-screen flex flex-col">
+        <Topbar user={currentUser} />
+        
+        <div className="flex flex-1 pt-32 px-8 gap-8">
+          {/* Left Sidebar */}
+          <div className="hidden lg:block w-20 sticky top-32 h-fit">
+            <Sidebar user={currentUser} onLogout={handleLogout} />
           </div>
 
-          <main className="flex-1 lg:pl-32 xl:pr-[360px] min-h-screen pt-28">
-            <div className="max-w-3xl mx-auto px-4">
-              <Routes>
-                <Route path="/" element={<HomePage currentUser={user} />} />
-                <Route path="/profile/:username" element={<ProfilePage currentUser={user} onUpdateUser={handleUpdateUser} />} />
-                <Route path="/profile" element={<Navigate to={`/profile/${user.username}`} replace />} />
-                <Route path="/post/:postId" element={<PostDetailPage currentUser={user} />} />
-                <Route path="/page/:pageId" element={<PageDetailPage currentUser={user} />} />
-                <Route path="/group/:groupId" element={<GroupDetailPage currentUser={user} />} />
-                <Route path="/friends" element={<FriendsPage />} />
-                <Route path="/groups" element={<HubPage type="groups" currentUser={user} />} />
-                <Route path="/pages" element={<HubPage type="pages" currentUser={user} />} />
-                <Route path="/settings" element={<SettingsPage currentUser={user} onUpdateUser={handleUpdateUser} />} />
-                <Route path="/settings/:tab" element={<SettingsPage currentUser={user} onUpdateUser={handleUpdateUser} />} />
-                <Route path="/chat" element={<ChatPage user={user} />} />
-                <Route path="/watch" element={<AetherPlaceholder />} />
-                <Route path="/memories" element={<GalleryPage currentUser={user} />} />
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </div>
+          {/* Main Feed Area */}
+          <main className="flex-1 max-w-3xl mx-auto">
+            <Routes>
+              <Route path="/" element={<HomePage currentUser={currentUser} />} />
+              <Route path="/friends" element={<FriendsPage />} />
+              <Route path="/chat" element={<ChatPage user={currentUser} />} />
+              <Route path="/memories" element={<GalleryPage currentUser={currentUser} />} />
+              <Route path="/post/:postId" element={<PostDetailPage currentUser={currentUser} />} />
+              <Route path="/profile/:username" element={<ProfilePage currentUser={currentUser} onUpdateUser={setCurrentUser} />} />
+              <Route path="/groups" element={<HubPage type="groups" currentUser={currentUser} />} />
+              <Route path="/pages" element={<HubPage type="pages" currentUser={currentUser} />} />
+              <Route path="/group/:groupId" element={<GroupDetailPage currentUser={currentUser} />} />
+              <Route path="/page/:pageId" element={<PageDetailPage currentUser={currentUser} />} />
+              <Route path="/settings" element={<SettingsPage currentUser={currentUser} onUpdateUser={setCurrentUser} />} />
+              <Route path="/settings/:tab" element={<SettingsPage currentUser={currentUser} onUpdateUser={setCurrentUser} />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </main>
 
+          {/* Right Discovery Sidebar */}
           <div className="hidden xl:block">
             <RightSidebar />
           </div>

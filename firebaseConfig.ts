@@ -1,7 +1,6 @@
-
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, serverTimestamp } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -13,12 +12,16 @@ const firebaseConfig = {
   appId: "1:172694934932:web:62bb46749dd0c062bfab81"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+console.log("Nexus Social: Initializing Neural Database...");
 
-// Initialize Services
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-export { serverTimestamp };
+// Initialize Firebase services
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+const googleProvider = new GoogleAuthProvider();
+
+console.log("Nexus Social: Firestore Node Operational.");
+
+// Export necessary members
+export { db, auth, storage, googleProvider, serverTimestamp };

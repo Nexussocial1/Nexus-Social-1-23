@@ -1,6 +1,6 @@
 {
-  "name": "Nexus Social 2",
-  "description": "A high-performance, aesthetically pleasing social networking application featuring real-time feed simulation, profile management, and global cloud-synced messaging.",
+  "name": "Nexus Social",
+  "description": "High-fidelity futuristic social network built with React and Firebase.",
   "requestFramePermissions": [
     "camera",
     "microphone"
