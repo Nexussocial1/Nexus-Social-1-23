@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Message } from '../types';
 import { db, auth } from '../firebaseConfig';
@@ -75,14 +74,14 @@ const ChatPage: React.FC<{ user: User }> = ({ user }) => {
   useEffect(() => {
     if (!adminCheckComplete || !currentAuthUid) return;
 
+    // Use client-side sorting when filtering by participants to avoid composite index error
     let q;
     if (isAdmin) {
       q = query(collection(db, "chats"), orderBy("lastUpdated", "desc"));
     } else {
       q = query(
         collection(db, "chats"), 
-        where("participants", "array-contains", currentAuthUid),
-        orderBy("lastUpdated", "desc")
+        where("participants", "array-contains", currentAuthUid)
       );
     }
 
@@ -100,6 +99,16 @@ const ChatPage: React.FC<{ user: User }> = ({ user }) => {
             type: data.type || 'direct'
           };
         }) as ChatRoom[];
+
+        // Sort client-side if not already sorted by Firestore
+        if (!isAdmin) {
+          fetchedRooms.sort((a, b) => {
+            const tA = a.lastUpdated?.seconds || 0;
+            const tB = b.lastUpdated?.seconds || 0;
+            return tB - tA;
+          });
+        }
+
         setRooms(fetchedRooms);
         setLoading(false);
       },

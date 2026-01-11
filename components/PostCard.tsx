@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Post, User, ReactionType, PostComment } from '../types';
@@ -49,12 +48,20 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onReportPost: on
   const postIsBookmarked = isSaved(post.id);
   const followingAuthor = isFollowing(post.userId);
 
-  // Real-time Comments Listener
+  // Real-time Comments Listener - Sorting client-side to bypass composite index requirement
   useEffect(() => {
     if (!isCommentsOpen) return;
-    const q = query(collection(db, "comments"), where("postId", "==", post.id), orderBy("createdAt", "asc"));
+    // Removed orderBy to fix [code=failed-precondition] error
+    const q = query(collection(db, "comments"), where("postId", "==", post.id));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setCommentsList(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any);
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+      // Client-side sort by createdAt
+      const sorted = fetched.sort((a, b) => {
+        const tA = a.createdAt?.seconds || 0;
+        const tB = b.createdAt?.seconds || 0;
+        return tA - tB;
+      });
+      setCommentsList(sorted);
     });
     return () => unsubscribe();
   }, [isCommentsOpen, post.id]);

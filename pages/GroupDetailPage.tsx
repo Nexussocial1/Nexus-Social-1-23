@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Group, Post, User } from '../types';
@@ -57,14 +56,19 @@ const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ currentUser }) => {
       navigate('/groups');
     });
 
-    // Listen to Group Posts globally
+    // Listen to Group Posts globally - Sorting client-side to bypass composite index
     const qPosts = query(
       collection(db, "posts"), 
-      where("groupId", "==", groupId),
-      orderBy("createdAt", "desc")
+      where("groupId", "==", groupId)
     );
     const unsubscribePosts = onSnapshot(qPosts, (snapshot) => {
-      setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Post[]);
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+      const sorted = fetched.sort((a, b) => {
+        const tA = a.createdAt?.seconds || 0;
+        const tB = b.createdAt?.seconds || 0;
+        return tB - tA;
+      });
+      setPosts(sorted);
     });
 
     return () => {

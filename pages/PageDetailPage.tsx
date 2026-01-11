@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Page, Post, User } from '../types';
@@ -58,14 +57,19 @@ const PageDetailPage: React.FC<PageDetailPageProps> = ({ currentUser }) => {
       navigate('/pages');
     });
 
-    // Listen to Page Broadcasts globally
+    // Listen to Page Broadcasts globally - Using client-side sort to bypass composite index
     const qPosts = query(
       collection(db, "posts"), 
-      where("pageId", "==", pageId), 
-      orderBy("createdAt", "desc")
+      where("pageId", "==", pageId)
     );
     const unsubscribePosts = onSnapshot(qPosts, (snapshot) => {
-      setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Post[]);
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+      const sorted = fetched.sort((a, b) => {
+        const tA = a.createdAt?.seconds || 0;
+        const tB = b.createdAt?.seconds || 0;
+        return tB - tA;
+      });
+      setPosts(sorted);
     });
 
     return () => {
