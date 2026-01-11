@@ -82,12 +82,12 @@ const App: React.FC = () => {
     );
   }
 
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        <LoginPage onLogin={setCurrentUser} />
-      </div>
-    );
+  if (!currentUser && !loading) {
+  return (
+    <Router>
+      <LoginPage onLogin={(user) => setCurrentUser(user)} />
+    </Router>
+  );
   }
 
   return (
