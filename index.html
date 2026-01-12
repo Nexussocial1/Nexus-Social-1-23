@@ -1,59 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Social | Neural Link</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-deep: #02040a;
-            --aura-indigo: #6366f1;
-            --aura-cyan: #06b6d4;
-        }
-        body {
-            font-family: 'Lexend', sans-serif;
-            background-color: var(--bg-deep);
-            color: #f1f5f9;
-            margin: 0;
-            overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
-            background-attachment: fixed;
-        }
-        .font-display { font-family: 'Outfit', sans-serif; }
-        .glass-aura {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .refract-border {
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 40px rgba(0,0,0,0.6);
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-    "firebase/": "https://esm.sh/firebase@^12.7.0/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
-  }
-}
-</script>
+<meta charset='UTF-8'>
+<title>Nexus Lite</title>
+<style>
+body{font-family:sans-serif;background:#02040a;color:#fff}
+#feed .post{background:#111;padding:10px;margin:10px 0;border-radius:8px}
+</style>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+<h2>Nexus Lite Feed</h2>
+<input id="postInput" placeholder="What's on your mind?" />
+<button id="postBtn">Post</button>
+<div id="feed"></div>
+<script>
+document.getElementById('postBtn').onclick=function(){
+ const input=document.getElementById('postInput');
+ if(!input.value) return;
+ const d=document.createElement('div');
+ d.className='post';
+ d.textContent=input.value;
+ document.getElementById('feed').prepend(d);
+ input.value='';
+}
+</script>
 </body>
 </html>
